@@ -1,0 +1,46 @@
+<launch>
+
+  <!-- Model setup -->
+  <!-- test.xacro 里面包括base_link &  depthcam.xacro-->
+  <arg name="d435_model" default="$(find realsense_ros_gazebo)/xacro/test.xacro"/>
+
+  <!-- spawn urdf model to gazebo -->
+  <!-- robot_description 这个param好像后面的节点也要用 -->
+  <!-- robot_state_publisher 这个节点要用？ -->
+  <!-- 而且如果是许多不同的机器人，那么他们各自的tf也不同 -->
+  <!-- 这就需要相关的工具来管理了 -->
+  <param name="robot_description" command="$(find xacro)/xacro $(arg d435_model)" />
+  <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" 
+  args="-z 1.0 -unpause -urdf -model test_model -param robot_description" 
+  respawn="false" output="screen" />
+
+   <!-- spawn monocam sdf model to gazebo -->
+  <node  name="urdf_spawn_monocam" pkg="gazebo_ros" type="spawn_model" 
+  args="-z 0.6 -unpause -sdf -model monocam -file $(find realsense_ros_gazebo)/xacro/monocam.sdf" 
+  respawn="false" output="screen" />
+
+  <!-- spawn checker_board sdf model to gazebo -->
+  <node  name="urdf_spawn_checker_board" pkg="gazebo_ros" type="spawn_model" 
+  args="-x 1.0 -z 0.5 -P 1.57 -unpause -sdf -model checker_board_model -file $(find realsense_ros_gazebo)/xacro/checkerboard.sdf" 
+  respawn="false" output="screen" />
+
+  <!-- simulator -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="paused" value="true"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="recording" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <!-- state publishers -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+  <!-- rviz -->
+  <!-- i have launched the file there -->
+  <node name="rviz" pkg="rviz" type="rviz"
+  args="-d $(find realsense_ros_gazebo)/rviz/nils_rviz_2cam_checker.rviz" 
+  required="true"/>
+</launch>
